@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voice Agent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Space+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Voice Agent</h1>
+      <p class="subtitle">Ask me anything — I'm listening</p>
+    </header>
+
+    <main>
+      <!-- Status indicator -->
+      <div class="status-container">
+        <div class="status-orb" id="statusOrb">
+          <div class="orb-inner"></div>
+          <div class="orb-pulse"></div>
+        </div>
+        <span class="status-text" id="statusText">Ready</span>
+      </div>
+
+      <!-- Conversation display -->
+      <div class="conversation" id="conversation">
+        <div class="message assistant">
+          <span class="message-label">Agent</span>
+          <p>Hello! Click "Start conversation" below to begin talking with me. I'll automatically listen after each response.</p>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="controls">
+        <button class="listen-btn" id="listenBtn">
+          <svg class="mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" y1="19" x2="12" y2="23"/>
+            <line x1="8" y1="23" x2="16" y2="23"/>
+          </svg>
+          <span>Start conversation</span>
+        </button>
+      </div>
+    </main>
+
+    <!-- Settings panel -->
+    <div class="settings-panel" id="settingsPanel">
+      <button class="settings-toggle" id="settingsToggle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+      </button>
+      <div class="settings-content" id="settingsContent">
+        <h3>Configuration</h3>
+        <div class="setting-group">
+          <label for="voiceSelect">Voice</label>
+          <select id="voiceSelect">
+            <option value="aura-asteria-en">Asteria (Female)</option>
+            <option value="aura-luna-en">Luna (Female)</option>
+            <option value="aura-stella-en">Stella (Female)</option>
+            <option value="aura-athena-en">Athena (Female)</option>
+            <option value="aura-hera-en">Hera (Female)</option>
+            <option value="aura-orion-en">Orion (Male)</option>
+            <option value="aura-arcas-en">Arcas (Male)</option>
+            <option value="aura-perseus-en">Perseus (Male)</option>
+            <option value="aura-angus-en">Angus (Male)</option>
+            <option value="aura-orpheus-en">Orpheus (Male)</option>
+            <option value="aura-helios-en">Helios (Male)</option>
+            <option value="aura-zeus-en">Zeus (Male)</option>
+          </select>
+        </div>
+        <div class="setting-group">
+          <label for="systemPrompt">System Prompt</label>
+          <textarea id="systemPrompt" rows="3" placeholder="Customize the agent's personality...">You are a helpful voice assistant. Keep your responses concise and conversational since they will be spoken aloud. Aim for 2-3 sentences unless the user asks for more detail.</textarea>
+        </div>
+        <button class="save-btn" id="saveSettings">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
