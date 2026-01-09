@@ -1,8 +1,8 @@
 /**
- * Voice Agent - Deepgram STT/TTS + Claude AI
+ * Meeting Room - Multiple AI Participants
  */
 
-class VoiceAgent {
+class MeetingRoom {
   constructor() {
     // DOM elements
     this.statusOrb = document.getElementById('statusOrb');
@@ -13,21 +13,50 @@ class VoiceAgent {
     this.settingsToggle = document.getElementById('settingsToggle');
     this.settingsContent = document.getElementById('settingsContent');
     this.saveSettingsBtn = document.getElementById('saveSettings');
+    this.participantElements = document.querySelectorAll('.participant');
 
     // Input elements
     this.voiceSelect = document.getElementById('voiceSelect');
-    this.systemPromptInput = document.getElementById('systemPrompt');
+    this.allRespondCheckbox = document.getElementById('allRespond');
 
     // API base URL
     this.apiBaseUrl = window.location.origin;
 
     // State
     this.isListening = false;
-    this.isConversationMode = false;
+    this.isMeetingActive = false;
     this.mediaRecorder = null;
     this.audioChunks = [];
     this.conversationHistory = [];
     this.currentAudio = null;
+
+    // Meeting participants
+    this.participants = [
+      {
+        id: 1,
+        name: 'Alex',
+        role: 'Manager',
+        emoji: '👨‍💼',
+        voice: 'aura-orion-en',
+        personality: 'You are Alex, a team manager. Focus on timelines and strategy. ALWAYS keep responses to 1-2 sentences maximum. Be brief and direct. Always end with a follow-up question to keep the conversation going.'
+      },
+      {
+        id: 2,
+        name: 'Sarah',
+        role: 'Engineer',
+        emoji: '👩‍💻',
+        voice: 'aura-athena-en',
+        personality: 'You are Sarah, a senior software engineer. Focus on technical points. ALWAYS keep responses to 1-2 sentences maximum. Be concise and technical. Always end with a follow-up question to keep the conversation going.'
+      },
+      {
+        id: 3,
+        name: 'Jordan',
+        role: 'Designer',
+        emoji: '👨‍🎨',
+        voice: 'aura-arcas-en',
+        personality: 'You are Jordan, a UX designer. Focus on user experience. ALWAYS keep responses to 1-2 sentences maximum. Be brief and design-focused. Always end with a follow-up question to keep the conversation going.'
+      }
+    ];
 
     // Load saved settings
     this.loadSettings();
@@ -37,12 +66,12 @@ class VoiceAgent {
   }
 
   bindEvents() {
-    // Click to start/stop conversation
+    // Click to start/stop meeting
     this.listenBtn.addEventListener('click', () => {
-      if (this.isConversationMode) {
-        this.endConversation();
+      if (this.isMeetingActive) {
+        this.endMeeting();
       } else {
-        this.startConversation();
+        this.startMeeting();
       }
     });
 
@@ -68,21 +97,20 @@ class VoiceAgent {
   }
 
   loadSettings() {
-    this.voice = localStorage.getItem('voice') || 'aura-asteria-en';
-    this.systemPrompt = localStorage.getItem('systemPrompt') ||
-      'You are a helpful voice assistant. Keep your responses very brief and conversational since they will be spoken aloud. Use 1-2 sentences maximum. Be direct and to the point. Always end with a follow-up question to keep the conversation going.';
+    this.baseVoice = localStorage.getItem('meetingVoice') || 'aura-asteria-en';
+    this.allRespond = localStorage.getItem('allRespond') !== 'false';
 
     // Populate inputs
-    this.voiceSelect.value = this.voice;
-    this.systemPromptInput.value = this.systemPrompt;
+    this.voiceSelect.value = this.baseVoice;
+    this.allRespondCheckbox.checked = this.allRespond;
   }
 
   saveSettings() {
-    this.voice = this.voiceSelect.value;
-    this.systemPrompt = this.systemPromptInput.value.trim();
+    this.baseVoice = this.voiceSelect.value;
+    this.allRespond = this.allRespondCheckbox.checked;
 
-    localStorage.setItem('voice', this.voice);
-    localStorage.setItem('systemPrompt', this.systemPrompt);
+    localStorage.setItem('meetingVoice', this.baseVoice);
+    localStorage.setItem('allRespond', this.allRespond);
 
     this.settingsContent.classList.remove('open');
     this.showStatus('ready', 'Settings saved');
@@ -93,46 +121,55 @@ class VoiceAgent {
     this.statusText.textContent = text;
   }
 
-  addMessage(role, text) {
+  addMessage(role, content, participantName = null) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}`;
 
     const label = document.createElement('span');
     label.className = 'message-label';
-    label.textContent = role === 'user' ? 'You' : 'Agent';
+    label.textContent = participantName || (role === 'user' ? 'You' : 'Assistant');
 
-    const content = document.createElement('p');
-    content.textContent = text;
+    const text = document.createElement('p');
+    text.textContent = content;
 
     messageDiv.appendChild(label);
-    messageDiv.appendChild(content);
-    this.conversation.appendChild(messageDiv);
+    messageDiv.appendChild(text);
 
-    // Scroll to bottom
+    // Remove initial message if it exists
+    const initialMsg = this.conversation.querySelector('.message.assistant p');
+    if (initialMsg && initialMsg.textContent.includes('Welcome to the meeting room')) {
+      this.conversation.innerHTML = '';
+    }
+
+    this.conversation.appendChild(messageDiv);
     this.conversation.scrollTop = this.conversation.scrollHeight;
 
-    // Add to history for context
-    this.conversationHistory.push({ role, content: text });
+    // Add to history
+    this.conversationHistory.push({
+      role: role,
+      content: content,
+      participant: participantName
+    });
 
-    // Keep history manageable (last 10 exchanges)
-    if (this.conversationHistory.length > 20) {
-      this.conversationHistory = this.conversationHistory.slice(-20);
+    // Keep history manageable
+    if (this.conversationHistory.length > 30) {
+      this.conversationHistory = this.conversationHistory.slice(-30);
     }
   }
 
-  async startConversation() {
-    this.isConversationMode = true;
+  async startMeeting() {
+    this.isMeetingActive = true;
     this.listenBtn.classList.add('active');
-    this.listenBtn.querySelector('span').textContent = 'End conversation';
+    this.listenBtn.querySelector('span').textContent = 'End meeting';
     this.stopBtn.style.display = 'flex';
     this.showStatus('listening', 'Listening...');
     await this.startListening();
   }
 
-  endConversation() {
-    this.isConversationMode = false;
+  endMeeting() {
+    this.isMeetingActive = false;
     this.listenBtn.classList.remove('active');
-    this.listenBtn.querySelector('span').textContent = 'Start conversation';
+    this.listenBtn.querySelector('span').textContent = 'Start meeting';
     this.stopBtn.style.display = 'none';
     if (this.isListening) {
       this.stopListening();
@@ -162,10 +199,15 @@ class VoiceAgent {
       clearTimeout(this.silenceTimeout);
     }
 
-    // If in conversation mode, restart listening
-    if (this.isConversationMode) {
+    // Remove all participant highlights
+    this.participantElements.forEach(el => {
+      el.classList.remove('speaking');
+    });
+
+    // If in meeting mode, restart listening
+    if (this.isMeetingActive) {
       setTimeout(async () => {
-        if (this.isConversationMode) {
+        if (this.isMeetingActive) {
           this.showStatus('listening', 'Listening...');
           await this.startListening();
         }
@@ -247,7 +289,7 @@ class VoiceAgent {
       console.error('Microphone error:', error);
       this.showStatus('error', 'Microphone access denied');
       this.isListening = false;
-      this.isConversationMode = false;
+      this.isMeetingActive = false;
     }
   }
 
@@ -268,37 +310,36 @@ class VoiceAgent {
 
   async processAudio() {
     try {
-      // Create audio blob
       const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
 
-      // Convert to text using Deepgram
+      // Convert to text
       const transcript = await this.speechToText(audioBlob);
 
       if (!transcript || transcript.trim() === '') {
         this.showStatus('ready', 'No speech detected');
-        // If in conversation mode, restart listening
-        if (this.isConversationMode) {
+        if (this.isMeetingActive) {
           await this.startListening();
         }
         return;
       }
 
       // Show user message
-      this.addMessage('user', transcript);
+      this.addMessage('user', transcript, 'You');
 
-      // Get AI response
-      this.showStatus('processing', 'Thinking...');
-      const response = await this.getAIResponse(transcript);
+      // Get responses from participants
+      if (this.allRespond) {
+        // All participants respond
+        for (const participant of this.participants) {
+          await this.getParticipantResponse(participant, transcript);
+        }
+      } else {
+        // Random participant responds
+        const randomParticipant = this.participants[Math.floor(Math.random() * this.participants.length)];
+        await this.getParticipantResponse(randomParticipant, transcript);
+      }
 
-      // Show assistant message
-      this.addMessage('assistant', response);
-
-      // Speak the response
-      this.showStatus('speaking', 'Speaking...');
-      await this.textToSpeech(response);
-
-      // If in conversation mode, automatically restart listening
-      if (this.isConversationMode) {
+      // If in meeting mode, automatically restart listening
+      if (this.isMeetingActive) {
         this.showStatus('listening', 'Listening...');
         await this.startListening();
       } else {
@@ -309,15 +350,77 @@ class VoiceAgent {
       console.error('Processing error:', error);
       this.showStatus('error', error.message || 'Error processing');
 
-      // If in conversation mode and error occurred, restart listening
-      if (this.isConversationMode) {
+      if (this.isMeetingActive) {
         setTimeout(async () => {
-          if (this.isConversationMode) {
+          if (this.isMeetingActive) {
             await this.startListening();
           }
         }, 2000);
       }
     }
+  }
+
+  async getParticipantResponse(participant, userMessage) {
+    try {
+      // Highlight active participant
+      this.highlightParticipant(participant.id);
+
+      this.showStatus('processing', `${participant.name} is thinking...`);
+
+      // Build context with recent conversation history including other participants
+      const recentHistory = this.conversationHistory
+        .slice(-10)
+        .map(msg => {
+          if (msg.role === 'user') {
+            return { role: 'user', content: msg.content };
+          } else {
+            // Include which participant said what
+            return { role: 'assistant', content: `${msg.participant}: ${msg.content}` };
+          }
+        });
+
+      // Add the current user message if not already in history
+      if (recentHistory.length === 0 || recentHistory[recentHistory.length - 1].content !== userMessage) {
+        recentHistory.push({ role: 'user', content: userMessage });
+      }
+
+      // Enhanced personality prompt that considers other participants
+      const contextualPrompt = `${participant.personality}
+
+IMPORTANT: You are in a meeting with other participants. Previous responses from your colleagues are shown above. Build on what they said, reference their points, agree or politely disagree, and add your own perspective. Don't just repeat what others said - contribute something new from your unique role perspective.`;
+
+      // Get AI response with full context
+      const response = await this.getAIResponseWithContext(recentHistory, contextualPrompt);
+
+      // Show participant message
+      this.addMessage('assistant', response, `${participant.emoji} ${participant.name}`);
+
+      // Speak the response
+      this.showStatus('speaking', `${participant.name} is speaking...`);
+      await this.textToSpeech(response, participant.voice);
+
+      // Remove highlight
+      this.removeHighlight(participant.id);
+
+    } catch (error) {
+      console.error(`Error getting response from ${participant.name}:`, error);
+    }
+  }
+
+  highlightParticipant(id) {
+    this.participantElements.forEach(el => {
+      if (parseInt(el.dataset.id) === id) {
+        el.classList.add('speaking');
+      }
+    });
+  }
+
+  removeHighlight(id) {
+    this.participantElements.forEach(el => {
+      if (parseInt(el.dataset.id) === id) {
+        el.classList.remove('speaking');
+      }
+    });
   }
 
   async speechToText(audioBlob) {
@@ -337,19 +440,8 @@ class VoiceAgent {
     return data.results?.channels?.[0]?.alternatives?.[0]?.transcript || '';
   }
 
-  async getAIResponse(userMessage) {
-    // Build messages with history
-    const messages = this.conversationHistory
-      .slice(-10) // Last 5 exchanges
-      .map(msg => ({
-        role: msg.role === 'user' ? 'user' : 'assistant',
-        content: msg.content
-      }));
-
-    // Ensure last message is user's current message
-    if (messages.length === 0 || messages[messages.length - 1].content !== userMessage) {
-      messages.push({ role: 'user', content: userMessage });
-    }
+  async getAIResponse(userMessage, systemPrompt) {
+    const messages = [{ role: 'user', content: userMessage }];
 
     const response = await fetch(`${this.apiBaseUrl}/api/chat`, {
       method: 'POST',
@@ -358,13 +450,13 @@ class VoiceAgent {
       },
       body: JSON.stringify({
         messages: messages,
-        systemPrompt: this.systemPrompt
+        systemPrompt: systemPrompt
       })
     });
 
     if (!response.ok) {
       const error = await response.text();
-      console.error('Claude API error:', error);
+      console.error('OpenAI API error:', error);
       throw new Error(`AI request failed: ${response.status}`);
     }
 
@@ -372,20 +464,41 @@ class VoiceAgent {
     return data.choices?.[0]?.message?.content || "I'm not sure how to respond to that.";
   }
 
-  async textToSpeech(text) {
+  async getAIResponseWithContext(messages, systemPrompt) {
+    const response = await fetch(`${this.apiBaseUrl}/api/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        messages: messages,
+        systemPrompt: systemPrompt
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      console.error('OpenAI API error:', error);
+      throw new Error(`AI request failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || "I'm not sure how to respond to that.";
+  }
+
+  async textToSpeech(text, voice) {
     const response = await fetch(`${this.apiBaseUrl}/api/tts`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ text, voice: this.voice })
+      body: JSON.stringify({ text, voice: voice || this.baseVoice })
     });
 
     if (!response.ok) {
       throw new Error(`TTS failed: ${response.status}`);
     }
 
-    // Get audio and play it
     const audioBlob = await response.blob();
     const audioUrl = URL.createObjectURL(audioBlob);
     const audio = new Audio(audioUrl);
@@ -415,5 +528,5 @@ class VoiceAgent {
 
 // Initialize on DOM ready
 document.addEventListener('DOMContentLoaded', () => {
-  window.voiceAgent = new VoiceAgent();
+  new MeetingRoom();
 });

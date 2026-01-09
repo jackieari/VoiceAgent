@@ -3,20 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Voice Agent</title>
+  <title>Meeting Room - Voice Agent</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Space+Mono&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="meeting.css">
 </head>
 <body>
   <div class="container">
     <header>
       <div class="header-content">
-        <h1>Voice Agent</h1>
-        <a href="meeting.html" class="back-link">Meeting Room</a>
+        <h1>Meeting Room</h1>
+        <a href="index.html" class="back-link">Back to Single Chat</a>
       </div>
-      <p class="subtitle">Ask me anything — I'm listening</p>
+      <p class="subtitle">Practice speaking with multiple AI participants</p>
     </header>
 
     <main>
@@ -29,11 +30,36 @@
         <span class="status-text" id="statusText">Ready</span>
       </div>
 
+      <!-- Participants -->
+      <div class="participants" id="participants">
+        <div class="participant" data-id="1">
+          <div class="avatar">👨‍💼</div>
+          <div class="participant-info">
+            <h3>Alex (Manager)</h3>
+            <p class="role">Team Lead</p>
+          </div>
+        </div>
+        <div class="participant" data-id="2">
+          <div class="avatar">👩‍💻</div>
+          <div class="participant-info">
+            <h3>Sarah (Engineer)</h3>
+            <p class="role">Technical Expert</p>
+          </div>
+        </div>
+        <div class="participant" data-id="3">
+          <div class="avatar">👨‍🎨</div>
+          <div class="participant-info">
+            <h3>Jordan (Designer)</h3>
+            <p class="role">UX Designer</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Conversation display -->
       <div class="conversation" id="conversation">
         <div class="message assistant">
-          <span class="message-label">Agent</span>
-          <p>Hello! Click "Start conversation" below to begin talking with me. I'll automatically listen after each response.</p>
+          <span class="message-label">Meeting Room</span>
+          <p>Welcome to the meeting room! Click "Start Meeting" to begin. Each participant will respond based on their role.</p>
         </div>
       </div>
 
@@ -46,7 +72,7 @@
             <line x1="12" y1="19" x2="12" y2="23"/>
             <line x1="8" y1="23" x2="16" y2="23"/>
           </svg>
-          <span>Start conversation</span>
+          <span>Start meeting</span>
         </button>
         <button class="stop-btn" id="stopBtn" style="display: none;">
           <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
@@ -66,7 +92,7 @@
         </svg>
       </button>
       <div class="settings-content" id="settingsContent">
-        <h3>Configuration</h3>
+        <h3>Meeting Settings</h3>
         <div class="setting-group">
           <label for="voiceSelect">Voice</label>
           <select id="voiceSelect">
@@ -85,14 +111,16 @@
           </select>
         </div>
         <div class="setting-group">
-          <label for="systemPrompt">System Prompt</label>
-          <textarea id="systemPrompt" rows="3" placeholder="Customize the agent's personality...">You are a helpful voice assistant. Keep your responses very brief and conversational since they will be spoken aloud. Use 1-2 sentences maximum. Be direct and to the point. Always end with a follow-up question to keep the conversation going.</textarea>
+          <label>
+            <input type="checkbox" id="allRespond" checked>
+            All participants respond to each message
+          </label>
         </div>
         <button class="save-btn" id="saveSettings">Save Settings</button>
       </div>
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="meeting.js"></script>
 </body>
 </html>
